@@ -8,7 +8,5 @@ type Route struct {
 }
 
 var routes = []Route{
-	{Path: "/createUniversities", Handler: HandleCreateUniversity},
-	{Path: "/getUniversities", Handler: HandleGetAllUniversity},
 	{Path: "/hello", Handler: HandlerHello},
 }

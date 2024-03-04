@@ -1,29 +1,24 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
-	"log"
-	"net/http"
-
-	_ "github.com/lib/pq"
 )
 
-const PORT = 8080
+const (
+	host     = "db"
+	port     = 5432
+	user     = "admin"
+	password = "admin"
+	dbname   = "postgres"
+)
 
-func StartServer() {
-	for _, route := range routes {
-		http.HandleFunc(route.Path, route.Handler)
-	}
+var psqlconn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
-	fmt.Printf("Starting server at port %d\n", PORT)
-	defer db.Close()
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), nil); err != nil {
-		log.Fatal(err)
-	}
-}
+var db *sql.DB
 
-func CheckError(err error) {
-	if err != nil {
-		panic(err)
-	}
+func init() {
+	var err error
+	db, err = sql.Open("postgres", psqlconn)
+	CheckError(err)
 }

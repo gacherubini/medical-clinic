@@ -14,7 +14,6 @@ var r = mux.NewRouter()
 const PORT = 8080
 
 func StartServer() {
-
 	for _, route := range routes {
 		r.HandleFunc(route.Path, route.Handler)
 	}

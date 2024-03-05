@@ -23,7 +23,7 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	ID     int    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID int    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
 	Name   string `boil:"name" json:"name" toml:"name" yaml:"name"`
 	Age    string `boil:"age" json:"age" toml:"age" yaml:"age"`
 	Gender string `boil:"gender" json:"gender" toml:"gender" yaml:"gender"`
@@ -34,13 +34,13 @@ type User struct {
 }
 
 var UserColumns = struct {
-	ID     string
+	UserID string
 	Name   string
 	Age    string
 	Gender string
 	Phone  string
 }{
-	ID:     "id",
+	UserID: "user_id",
 	Name:   "name",
 	Age:    "age",
 	Gender: "gender",
@@ -48,13 +48,13 @@ var UserColumns = struct {
 }
 
 var UserTableColumns = struct {
-	ID     string
+	UserID string
 	Name   string
 	Age    string
 	Gender string
 	Phone  string
 }{
-	ID:     "users.id",
+	UserID: "users.user_id",
 	Name:   "users.name",
 	Age:    "users.age",
 	Gender: "users.gender",
@@ -64,13 +64,13 @@ var UserTableColumns = struct {
 // Generated where
 
 var UserWhere = struct {
-	ID     whereHelperint
+	UserID whereHelperint
 	Name   whereHelperstring
 	Age    whereHelperstring
 	Gender whereHelperstring
 	Phone  whereHelperstring
 }{
-	ID:     whereHelperint{field: "\"users\".\"id\""},
+	UserID: whereHelperint{field: "\"users\".\"user_id\""},
 	Name:   whereHelperstring{field: "\"users\".\"name\""},
 	Age:    whereHelperstring{field: "\"users\".\"age\""},
 	Gender: whereHelperstring{field: "\"users\".\"gender\""},
@@ -79,10 +79,20 @@ var UserWhere = struct {
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
-}{}
+	Admins   string
+	Doctors  string
+	Patients string
+}{
+	Admins:   "Admins",
+	Doctors:  "Doctors",
+	Patients: "Patients",
+}
 
 // userR is where relationships are stored.
 type userR struct {
+	Admins   AdminSlice   `boil:"Admins" json:"Admins" toml:"Admins" yaml:"Admins"`
+	Doctors  DoctorSlice  `boil:"Doctors" json:"Doctors" toml:"Doctors" yaml:"Doctors"`
+	Patients PatientSlice `boil:"Patients" json:"Patients" toml:"Patients" yaml:"Patients"`
 }
 
 // NewStruct creates a new relationship struct
@@ -90,14 +100,35 @@ func (*userR) NewStruct() *userR {
 	return &userR{}
 }
 
+func (r *userR) GetAdmins() AdminSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Admins
+}
+
+func (r *userR) GetDoctors() DoctorSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Doctors
+}
+
+func (r *userR) GetPatients() PatientSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Patients
+}
+
 // userL is where Load methods for each relationship are stored.
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "name", "age", "gender", "phone"}
+	userAllColumns            = []string{"user_id", "name", "age", "gender", "phone"}
 	userColumnsWithoutDefault = []string{"name", "age", "gender", "phone"}
-	userColumnsWithDefault    = []string{"id"}
-	userPrimaryKeyColumns     = []string{"id"}
+	userColumnsWithDefault    = []string{"user_id"}
+	userPrimaryKeyColumns     = []string{"user_id"}
 	userGeneratedColumns      = []string{}
 )
 
@@ -406,6 +437,546 @@ func (q userQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
+// Admins retrieves all the admin's Admins with an executor.
+func (o *User) Admins(mods ...qm.QueryMod) adminQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"admins\".\"user_id\"=?", o.UserID),
+	)
+
+	return Admins(queryMods...)
+}
+
+// Doctors retrieves all the doctor's Doctors with an executor.
+func (o *User) Doctors(mods ...qm.QueryMod) doctorQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"doctors\".\"user_id\"=?", o.UserID),
+	)
+
+	return Doctors(queryMods...)
+}
+
+// Patients retrieves all the patient's Patients with an executor.
+func (o *User) Patients(mods ...qm.QueryMod) patientQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"patients\".\"user_id\"=?", o.UserID),
+	)
+
+	return Patients(queryMods...)
+}
+
+// LoadAdmins allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadAdmins(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.UserID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.UserID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`admins`),
+		qm.WhereIn(`admins.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load admins")
+	}
+
+	var resultSlice []*Admin
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice admins")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on admins")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for admins")
+	}
+
+	if len(adminAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Admins = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &adminR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.UserID == foreign.UserID {
+				local.R.Admins = append(local.R.Admins, foreign)
+				if foreign.R == nil {
+					foreign.R = &adminR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadDoctors allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadDoctors(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.UserID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.UserID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`doctors`),
+		qm.WhereIn(`doctors.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load doctors")
+	}
+
+	var resultSlice []*Doctor
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice doctors")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on doctors")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for doctors")
+	}
+
+	if len(doctorAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Doctors = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &doctorR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.UserID == foreign.UserID {
+				local.R.Doctors = append(local.R.Doctors, foreign)
+				if foreign.R == nil {
+					foreign.R = &doctorR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadPatients allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadPatients(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.UserID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.UserID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`patients`),
+		qm.WhereIn(`patients.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load patients")
+	}
+
+	var resultSlice []*Patient
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice patients")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on patients")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for patients")
+	}
+
+	if len(patientAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Patients = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &patientR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.UserID == foreign.UserID {
+				local.R.Patients = append(local.R.Patients, foreign)
+				if foreign.R == nil {
+					foreign.R = &patientR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddAdmins adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.Admins.
+// Sets related.R.User appropriately.
+func (o *User) AddAdmins(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Admin) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.UserID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"admins\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, adminPrimaryKeyColumns),
+			)
+			values := []interface{}{o.UserID, rel.AdminID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.UserID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			Admins: related,
+		}
+	} else {
+		o.R.Admins = append(o.R.Admins, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &adminR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// AddDoctors adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.Doctors.
+// Sets related.R.User appropriately.
+func (o *User) AddDoctors(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Doctor) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.UserID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"doctors\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, doctorPrimaryKeyColumns),
+			)
+			values := []interface{}{o.UserID, rel.DoctorID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.UserID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			Doctors: related,
+		}
+	} else {
+		o.R.Doctors = append(o.R.Doctors, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &doctorR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// AddPatients adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.Patients.
+// Sets related.R.User appropriately.
+func (o *User) AddPatients(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Patient) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.UserID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"patients\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, patientPrimaryKeyColumns),
+			)
+			values := []interface{}{o.UserID, rel.PatientID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.UserID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			Patients: related,
+		}
+	} else {
+		o.R.Patients = append(o.R.Patients, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &patientR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
+}
+
 // Users retrieves all the records using an executor.
 func Users(mods ...qm.QueryMod) userQuery {
 	mods = append(mods, qm.From("\"users\""))
@@ -419,7 +990,7 @@ func Users(mods ...qm.QueryMod) userQuery {
 
 // FindUser retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindUser(ctx context.Context, exec boil.ContextExecutor, iD int, selectCols ...string) (*User, error) {
+func FindUser(ctx context.Context, exec boil.ContextExecutor, userID int, selectCols ...string) (*User, error) {
 	userObj := &User{}
 
 	sel := "*"
@@ -427,10 +998,10 @@ func FindUser(ctx context.Context, exec boil.ContextExecutor, iD int, selectCols
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"users\" where \"id\"=$1", sel,
+		"select %s from \"users\" where \"user_id\"=$1", sel,
 	)
 
-	q := queries.Raw(query, iD)
+	q := queries.Raw(query, userID)
 
 	err := q.Bind(ctx, exec, userObj)
 	if err != nil {
@@ -788,7 +1359,7 @@ func (o *User) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, er
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), userPrimaryKeyMapping)
-	sql := "DELETE FROM \"users\" WHERE \"id\"=$1"
+	sql := "DELETE FROM \"users\" WHERE \"user_id\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -885,7 +1456,7 @@ func (o UserSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (in
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *User) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindUser(ctx, exec, o.ID)
+	ret, err := FindUser(ctx, exec, o.UserID)
 	if err != nil {
 		return err
 	}
@@ -924,16 +1495,16 @@ func (o *UserSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) er
 }
 
 // UserExists checks if the User row exists.
-func UserExists(ctx context.Context, exec boil.ContextExecutor, iD int) (bool, error) {
+func UserExists(ctx context.Context, exec boil.ContextExecutor, userID int) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"users\" where \"id\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"users\" where \"user_id\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, iD)
+		fmt.Fprintln(writer, userID)
 	}
-	row := exec.QueryRowContext(ctx, sql, iD)
+	row := exec.QueryRowContext(ctx, sql, userID)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -945,5 +1516,5 @@ func UserExists(ctx context.Context, exec boil.ContextExecutor, iD int) (bool, e
 
 // Exists checks if the User row exists.
 func (o *User) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return UserExists(ctx, exec, o.ID)
+	return UserExists(ctx, exec, o.UserID)
 }

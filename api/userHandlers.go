@@ -47,6 +47,7 @@ func HandleGetAllUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
 		return
 	}
+
 	jsonResponse, err := json.Marshal(user)
 	if err != nil {
 		http.Error(w, "Failed to marshal response", http.StatusInternalServerError)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"medical-clinic/models"
 	"net/http"
+	"strings"
 
 	_ "github.com/lib/pq"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -13,7 +14,7 @@ import (
 )
 
 func HandleCreateDoctor(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
@@ -28,20 +29,46 @@ func HandleCreateDoctor(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Error decoding JSON: %s", err), http.StatusBadRequest)
 		return
 	}
-	user := userData.User
-	doctor := userData.Doctor
 
-	user.Insert(context.Background(), db, boil.Infer())
-	doctor.Insert(context.Background(), db, boil.Infer())
+	if strings.ToLower(userData.User.Role) != "doctor" {
+		http.Error(w, "Invalid role, expected doctor", http.StatusBadRequest)
+		return
+	}
 
-	user.AddDoctors(context.Background(), db, true, &doctor)
+	tx, err := db.Begin()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error starting transaction: %s", err), http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
 
+	err = userData.User.Insert(context.Background(), tx, boil.Infer())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error inserting user: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	userData.Doctor.UserID = userData.User.UserID
+
+	err = userData.Doctor.Insert(context.Background(), tx, boil.Infer())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error inserting doctor: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error committing transaction: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "Doctor created successfully")
 }
 
 func HandleGetAllDoctors(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
+	if r.Method != http.MethodGet {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
@@ -52,7 +79,20 @@ func HandleGetAllDoctors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonResponse, err := json.Marshal(doctors)
+	var combinedData []map[string]interface{}
+
+	for _, doctor := range doctors {
+		user := doctor.R.User
+
+		responseData := map[string]interface{}{
+			"doctor": doctor,
+			"user":   user,
+		}
+
+		combinedData = append(combinedData, responseData)
+	}
+
+	jsonDoctors, err := json.Marshal(combinedData)
 	if err != nil {
 		http.Error(w, "Error marshaling response", http.StatusInternalServerError)
 		return
@@ -60,5 +100,5 @@ func HandleGetAllDoctors(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(jsonResponse)
+	w.Write(jsonDoctors)
 }

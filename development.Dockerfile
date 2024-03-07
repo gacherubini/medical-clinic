@@ -6,4 +6,4 @@ COPY . .
 
 RUN go mod download
 
-CMD ["bash", "-c", "go run ."]
+CMD ["bash", "-c", "(cd migrations && go run . up) && go run ."]

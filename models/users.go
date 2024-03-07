@@ -28,6 +28,7 @@ type User struct {
 	Age    string `boil:"age" json:"age" toml:"age" yaml:"age"`
 	Gender string `boil:"gender" json:"gender" toml:"gender" yaml:"gender"`
 	Phone  string `boil:"phone" json:"phone" toml:"phone" yaml:"phone"`
+	Role   string `boil:"role" json:"role" toml:"role" yaml:"role"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -39,12 +40,14 @@ var UserColumns = struct {
 	Age    string
 	Gender string
 	Phone  string
+	Role   string
 }{
 	UserID: "user_id",
 	Name:   "name",
 	Age:    "age",
 	Gender: "gender",
 	Phone:  "phone",
+	Role:   "role",
 }
 
 var UserTableColumns = struct {
@@ -53,12 +56,14 @@ var UserTableColumns = struct {
 	Age    string
 	Gender string
 	Phone  string
+	Role   string
 }{
 	UserID: "users.user_id",
 	Name:   "users.name",
 	Age:    "users.age",
 	Gender: "users.gender",
 	Phone:  "users.phone",
+	Role:   "users.role",
 }
 
 // Generated where
@@ -69,12 +74,14 @@ var UserWhere = struct {
 	Age    whereHelperstring
 	Gender whereHelperstring
 	Phone  whereHelperstring
+	Role   whereHelperstring
 }{
 	UserID: whereHelperint{field: "\"users\".\"user_id\""},
 	Name:   whereHelperstring{field: "\"users\".\"name\""},
 	Age:    whereHelperstring{field: "\"users\".\"age\""},
 	Gender: whereHelperstring{field: "\"users\".\"gender\""},
 	Phone:  whereHelperstring{field: "\"users\".\"phone\""},
+	Role:   whereHelperstring{field: "\"users\".\"role\""},
 }
 
 // UserRels is where relationship names are stored.
@@ -125,8 +132,8 @@ func (r *userR) GetPatients() PatientSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"user_id", "name", "age", "gender", "phone"}
-	userColumnsWithoutDefault = []string{"name", "age", "gender", "phone"}
+	userAllColumns            = []string{"user_id", "name", "age", "gender", "phone", "role"}
+	userColumnsWithoutDefault = []string{"name", "age", "gender", "phone", "role"}
 	userColumnsWithDefault    = []string{"user_id"}
 	userPrimaryKeyColumns     = []string{"user_id"}
 	userGeneratedColumns      = []string{}

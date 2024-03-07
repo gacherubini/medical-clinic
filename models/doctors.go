@@ -23,32 +23,32 @@ import (
 
 // Doctor is an object representing the database table.
 type Doctor struct {
-	UserID      int    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
 	DoctorID    int    `boil:"doctor_id" json:"doctor_id" toml:"doctor_id" yaml:"doctor_id"`
 	Specialties string `boil:"specialties" json:"specialties" toml:"specialties" yaml:"specialties"`
+	UserID      int    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
 
 	R *doctorR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L doctorL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var DoctorColumns = struct {
-	UserID      string
 	DoctorID    string
 	Specialties string
+	UserID      string
 }{
-	UserID:      "user_id",
 	DoctorID:    "doctor_id",
 	Specialties: "specialties",
+	UserID:      "user_id",
 }
 
 var DoctorTableColumns = struct {
-	UserID      string
 	DoctorID    string
 	Specialties string
+	UserID      string
 }{
-	UserID:      "doctors.user_id",
 	DoctorID:    "doctors.doctor_id",
 	Specialties: "doctors.specialties",
+	UserID:      "doctors.user_id",
 }
 
 // Generated where
@@ -81,13 +81,13 @@ func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
 }
 
 var DoctorWhere = struct {
-	UserID      whereHelperint
 	DoctorID    whereHelperint
 	Specialties whereHelperstring
+	UserID      whereHelperint
 }{
-	UserID:      whereHelperint{field: "\"doctors\".\"user_id\""},
 	DoctorID:    whereHelperint{field: "\"doctors\".\"doctor_id\""},
 	Specialties: whereHelperstring{field: "\"doctors\".\"specialties\""},
+	UserID:      whereHelperint{field: "\"doctors\".\"user_id\""},
 }
 
 // DoctorRels is where relationship names are stored.
@@ -118,9 +118,9 @@ func (r *doctorR) GetUser() *User {
 type doctorL struct{}
 
 var (
-	doctorAllColumns            = []string{"user_id", "doctor_id", "specialties"}
-	doctorColumnsWithoutDefault = []string{"user_id", "specialties"}
-	doctorColumnsWithDefault    = []string{"doctor_id"}
+	doctorAllColumns            = []string{"doctor_id", "specialties", "user_id"}
+	doctorColumnsWithoutDefault = []string{"specialties"}
+	doctorColumnsWithDefault    = []string{"doctor_id", "user_id"}
 	doctorPrimaryKeyColumns     = []string{"doctor_id"}
 	doctorGeneratedColumns      = []string{}
 )

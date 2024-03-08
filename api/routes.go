@@ -1,6 +1,8 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type Route struct {
 	Path    string
@@ -8,5 +10,8 @@ type Route struct {
 }
 
 var routes = []Route{
-	{Path: "/hello", Handler: HandlerHello},
+	{Path: "/createUser", Handler: HandleCreateUser},
+	{Path: "/getUser", Handler: HandleGetAllUser},
+	{Path: "/deleteUser/{id}", Handler: HandleDeleteUser},
+	{Path: "/updateUser/{id}", Handler: HandleUpdateUser},
 }

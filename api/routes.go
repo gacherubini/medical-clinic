@@ -16,4 +16,6 @@ var routes = []Route{
 	{Path: "/updateUser/{id}", Handler: HandleUpdateUser},
 	{Path: "/createDoctor", Handler: HandleCreateDoctor},
 	{Path: "/getDoctors", Handler: HandleGetAllDoctors},
+	{Path: "/deleteDoctor/{id}", Handler: HandleDeleteDoctor},
+	{Path: "/updateDoctor/{id}", Handler: HandlerUpdateDoctor},
 }

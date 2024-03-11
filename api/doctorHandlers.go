@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"medical-clinic/models"
+	"medical-clinic/prepare"
 	"net/http"
 	"strconv"
 	"strings"
@@ -80,18 +81,7 @@ func HandleGetAllDoctors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var combinedData []map[string]interface{}
-
-	for _, doctor := range doctors {
-		user := doctor.R.User
-
-		responseData := map[string]interface{}{
-			"doctor": doctor,
-			"user":   user,
-		}
-
-		combinedData = append(combinedData, responseData)
-	}
+	combinedData := prepare.PrepareData(doctors)
 
 	jsonDoctors, err := json.Marshal(combinedData)
 	if err != nil {

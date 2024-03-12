@@ -3,9 +3,9 @@
 CREATE TABLE IF NOT EXISTS doctors (
     doctor_id SERIAL PRIMARY KEY,
     specialties VARCHAR(255) NOT NULL,
-    user_id SERIAL,
+    user_id SERIAL NOT NULL,
 
-    FOREIGN KEY (user_id) REFERENCES users(user_id) 
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 -- +goose StatementEnd
 

@@ -6,5 +6,6 @@ ADD role varchar(255) NOT NULL;
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE IF EXISTS users;
+ALTER TABLE users
+DROP COLUMN IF EXISTS role;
 -- +goose StatementEnd

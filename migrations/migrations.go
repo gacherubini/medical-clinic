@@ -13,7 +13,7 @@ import (
 
 func main() {
 	const (
-		host     = "localhost"
+		host     = "db"
 		port     = 5432
 		user     = "admin"
 		password = "admin"

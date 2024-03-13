@@ -47,11 +47,13 @@ func HandleGetAllUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
 		return
 	}
+
 	jsonResponse, err := json.Marshal(user)
 	if err != nil {
 		http.Error(w, "Failed to marshal response", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)
@@ -116,5 +118,5 @@ func HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "University updated successfully")
+	fmt.Fprintf(w, "User updated successfully")
 }

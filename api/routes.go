@@ -14,4 +14,10 @@ var routes = []Route{
 	{Path: "/getUser", Handler: HandleGetAllUser},
 	{Path: "/deleteUser/{id}", Handler: HandleDeleteUser},
 	{Path: "/updateUser/{id}", Handler: HandleUpdateUser},
+	{Path: "/createDoctor", Handler: HandleCreateDoctor},
+	{Path: "/getDoctors", Handler: HandleGetAllDoctors},
+	{Path: "/deleteDoctor/{id}", Handler: HandleDeleteDoctor},
+	{Path: "/updateDoctor/{id}", Handler: HandlerUpdateDoctor},
+	{Path: "/HealthInsurenceDoctor/{id}", Handler: HandlerAddHealthInsurenceDoctor},
+	{Path: "/HealthInsurenceDoctor", Handler: HandlerGetHealthInsurenceDoctor},
 }

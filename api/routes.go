@@ -10,14 +10,14 @@ type Route struct {
 }
 
 var routes = []Route{
-	{Path: "/createUser", Handler: HandleCreateUser},
-	{Path: "/getUser", Handler: HandleGetAllUser},
-	{Path: "/deleteUser/{id}", Handler: HandleDeleteUser},
-	{Path: "/updateUser/{id}", Handler: HandleUpdateUser},
-	{Path: "/createDoctor", Handler: HandleCreateDoctor},
-	{Path: "/getDoctors", Handler: HandleGetAllDoctors},
-	{Path: "/deleteDoctor/{id}", Handler: HandleDeleteDoctor},
-	{Path: "/updateDoctor/{id}", Handler: HandlerUpdateDoctor},
-	{Path: "/HealthInsurenceDoctor/{id}", Handler: HandlerAddHealthInsurenceDoctor},
-	{Path: "/HealthInsurenceDoctor", Handler: HandlerGetHealthInsurenceDoctor},
+	{Path: "/user", Handler: HandleCreateUser},
+	{Path: "/user", Handler: HandleGetAllUser},
+	{Path: "/users/{id}", Handler: HandleDeleteUser},
+	{Path: "/users/{id}", Handler: HandleUpdateUser},
+	{Path: "/doctors", Handler: HandleCreateDoctor},
+	{Path: "/doctors", Handler: HandleGetAllDoctors},
+	{Path: "/doctors/{id}", Handler: HandleDeleteDoctor},
+	{Path: "/doctors/{id}", Handler: HandlerUpdateDoctor},
+	{Path: "/doctors/healthinsurence/{id}", Handler: HandlerAddHealthInsurenceInDoctor},
+	{Path: "/doctors/healthinsurence", Handler: HandlerGetAllDoctorsWithHealthInsurence},
 }

@@ -183,7 +183,7 @@ func HandlerUpdateDoctor(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "doctor updated successfully")
 }
 
-func HandlerAddHealthInsurenceDoctor(w http.ResponseWriter, r *http.Request) {
+func HandlerAddHealthInsurenceInDoctor(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
 	intID, err := strconv.Atoi(id)
@@ -219,7 +219,7 @@ func HandlerAddHealthInsurenceDoctor(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "HealthInsurence created successfully")
 }
 
-func HandlerGetHealthInsurenceDoctor(w http.ResponseWriter, r *http.Request) {
+func HandlerGetAllDoctorsWithHealthInsurence(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return

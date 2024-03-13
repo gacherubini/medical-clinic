@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,54 +24,71 @@ import (
 
 // Patient is an object representing the database table.
 type Patient struct {
-	PatientID int `boil:"patient_id" json:"patient_id" toml:"patient_id" yaml:"patient_id"`
-	UserID    int `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	PatientID         int      `boil:"patient_id" json:"patient_id" toml:"patient_id" yaml:"patient_id"`
+	UserID            int      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	HealthinsuranceID null.Int `boil:"healthinsurance_id" json:"healthinsurance_id,omitempty" toml:"healthinsurance_id" yaml:"healthinsurance_id,omitempty"`
 
 	R *patientR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L patientL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var PatientColumns = struct {
-	PatientID string
-	UserID    string
+	PatientID         string
+	UserID            string
+	HealthinsuranceID string
 }{
-	PatientID: "patient_id",
-	UserID:    "user_id",
+	PatientID:         "patient_id",
+	UserID:            "user_id",
+	HealthinsuranceID: "healthinsurance_id",
 }
 
 var PatientTableColumns = struct {
-	PatientID string
-	UserID    string
+	PatientID         string
+	UserID            string
+	HealthinsuranceID string
 }{
-	PatientID: "patients.patient_id",
-	UserID:    "patients.user_id",
+	PatientID:         "patients.patient_id",
+	UserID:            "patients.user_id",
+	HealthinsuranceID: "patients.healthinsurance_id",
 }
 
 // Generated where
 
 var PatientWhere = struct {
-	PatientID whereHelperint
-	UserID    whereHelperint
+	PatientID         whereHelperint
+	UserID            whereHelperint
+	HealthinsuranceID whereHelpernull_Int
 }{
-	PatientID: whereHelperint{field: "\"patients\".\"patient_id\""},
-	UserID:    whereHelperint{field: "\"patients\".\"user_id\""},
+	PatientID:         whereHelperint{field: "\"patients\".\"patient_id\""},
+	UserID:            whereHelperint{field: "\"patients\".\"user_id\""},
+	HealthinsuranceID: whereHelpernull_Int{field: "\"patients\".\"healthinsurance_id\""},
 }
 
 // PatientRels is where relationship names are stored.
 var PatientRels = struct {
-	User string
+	Healthinsurance string
+	User            string
 }{
-	User: "User",
+	Healthinsurance: "Healthinsurance",
+	User:            "User",
 }
 
 // patientR is where relationships are stored.
 type patientR struct {
-	User *User `boil:"User" json:"User" toml:"User" yaml:"User"`
+	Healthinsurance *Healthinsurance `boil:"Healthinsurance" json:"Healthinsurance" toml:"Healthinsurance" yaml:"Healthinsurance"`
+	User            *User            `boil:"User" json:"User" toml:"User" yaml:"User"`
 }
 
 // NewStruct creates a new relationship struct
 func (*patientR) NewStruct() *patientR {
 	return &patientR{}
+}
+
+func (r *patientR) GetHealthinsurance() *Healthinsurance {
+	if r == nil {
+		return nil
+	}
+	return r.Healthinsurance
 }
 
 func (r *patientR) GetUser() *User {
@@ -84,9 +102,9 @@ func (r *patientR) GetUser() *User {
 type patientL struct{}
 
 var (
-	patientAllColumns            = []string{"patient_id", "user_id"}
+	patientAllColumns            = []string{"patient_id", "user_id", "healthinsurance_id"}
 	patientColumnsWithoutDefault = []string{}
-	patientColumnsWithDefault    = []string{"patient_id", "user_id"}
+	patientColumnsWithDefault    = []string{"patient_id", "user_id", "healthinsurance_id"}
 	patientPrimaryKeyColumns     = []string{"patient_id"}
 	patientGeneratedColumns      = []string{}
 )
@@ -396,6 +414,17 @@ func (q patientQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bo
 	return count > 0, nil
 }
 
+// Healthinsurance pointed to by the foreign key.
+func (o *Patient) Healthinsurance(mods ...qm.QueryMod) healthinsuranceQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"healthinsurance_id\" = ?", o.HealthinsuranceID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Healthinsurances(queryMods...)
+}
+
 // User pointed to by the foreign key.
 func (o *Patient) User(mods ...qm.QueryMod) userQuery {
 	queryMods := []qm.QueryMod{
@@ -405,6 +434,130 @@ func (o *Patient) User(mods ...qm.QueryMod) userQuery {
 	queryMods = append(queryMods, mods...)
 
 	return Users(queryMods...)
+}
+
+// LoadHealthinsurance allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (patientL) LoadHealthinsurance(ctx context.Context, e boil.ContextExecutor, singular bool, maybePatient interface{}, mods queries.Applicator) error {
+	var slice []*Patient
+	var object *Patient
+
+	if singular {
+		var ok bool
+		object, ok = maybePatient.(*Patient)
+		if !ok {
+			object = new(Patient)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePatient)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePatient))
+			}
+		}
+	} else {
+		s, ok := maybePatient.(*[]*Patient)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePatient)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePatient))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &patientR{}
+		}
+		if !queries.IsNil(object.HealthinsuranceID) {
+			args[object.HealthinsuranceID] = struct{}{}
+		}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &patientR{}
+			}
+
+			if !queries.IsNil(obj.HealthinsuranceID) {
+				args[obj.HealthinsuranceID] = struct{}{}
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`healthinsurance`),
+		qm.WhereIn(`healthinsurance.healthinsurance_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Healthinsurance")
+	}
+
+	var resultSlice []*Healthinsurance
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Healthinsurance")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for healthinsurance")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for healthinsurance")
+	}
+
+	if len(healthinsuranceAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Healthinsurance = foreign
+		if foreign.R == nil {
+			foreign.R = &healthinsuranceR{}
+		}
+		foreign.R.Patients = append(foreign.R.Patients, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.HealthinsuranceID, foreign.HealthinsuranceID) {
+				local.R.Healthinsurance = foreign
+				if foreign.R == nil {
+					foreign.R = &healthinsuranceR{}
+				}
+				foreign.R.Patients = append(foreign.R.Patients, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadUser allows an eager lookup of values, cached into the
@@ -524,6 +677,86 @@ func (patientL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular b
 		}
 	}
 
+	return nil
+}
+
+// SetHealthinsurance of the patient to the related item.
+// Sets o.R.Healthinsurance to related.
+// Adds o to related.R.Patients.
+func (o *Patient) SetHealthinsurance(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Healthinsurance) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"patients\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"healthinsurance_id"}),
+		strmangle.WhereClause("\"", "\"", 2, patientPrimaryKeyColumns),
+	)
+	values := []interface{}{related.HealthinsuranceID, o.PatientID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.HealthinsuranceID, related.HealthinsuranceID)
+	if o.R == nil {
+		o.R = &patientR{
+			Healthinsurance: related,
+		}
+	} else {
+		o.R.Healthinsurance = related
+	}
+
+	if related.R == nil {
+		related.R = &healthinsuranceR{
+			Patients: PatientSlice{o},
+		}
+	} else {
+		related.R.Patients = append(related.R.Patients, o)
+	}
+
+	return nil
+}
+
+// RemoveHealthinsurance relationship.
+// Sets o.R.Healthinsurance to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *Patient) RemoveHealthinsurance(ctx context.Context, exec boil.ContextExecutor, related *Healthinsurance) error {
+	var err error
+
+	queries.SetScanner(&o.HealthinsuranceID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("healthinsurance_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Healthinsurance = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.Patients {
+		if queries.Equal(o.HealthinsuranceID, ri.HealthinsuranceID) {
+			continue
+		}
+
+		ln := len(related.R.Patients)
+		if ln > 1 && i < ln-1 {
+			related.R.Patients[i] = related.R.Patients[ln-1]
+		}
+		related.R.Patients = related.R.Patients[:ln-1]
+		break
+	}
 	return nil
 }
 

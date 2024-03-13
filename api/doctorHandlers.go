@@ -75,7 +75,7 @@ func HandleGetAllDoctors(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
-	doctors, err := models.Doctors(qm.Load(models.DoctorRels.User)).All(context.Background(), db)
+	doctors, err := models.Doctors(qm.Load(models.DoctorRels.User), qm.Load(models.DoctorRels.Healthinsurance)).All(context.Background(), db)
 	if err != nil {
 		http.Error(w, "Error retrieving doctors", http.StatusInternalServerError)
 		return
@@ -102,7 +102,12 @@ func HandleDeleteDoctor(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 	id := params["id"]
-	intID, _ := strconv.Atoi(id)
+	intID, err := strconv.Atoi(id)
+
+	if err != nil {
+		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		return
+	}
 
 	doctor, err := models.FindDoctor(context.Background(), db, intID)
 	if err != nil {
@@ -236,11 +241,8 @@ func HandlerGetAllDoctorsWithHealthInsurence(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	combinedData, err := prepare.PrepareInsurence(doctors)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	combinedData := prepare.PrepareDoctor(doctors)
+
 	jsonDoctors, err := json.Marshal(combinedData)
 	if err != nil {
 		http.Error(w, "Error marshaling response", http.StatusInternalServerError)

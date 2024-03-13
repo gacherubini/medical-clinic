@@ -228,28 +228,3 @@ func HandlerAddHealthInsurenceInDoctor(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "HealthInsurence added in doctor successfully")
 }
-
-func HandlerGetAllDoctorsWithHealthInsurence(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
-		return
-	}
-
-	doctors, err := models.Doctors(qm.Load(models.DoctorRels.Healthinsurance), qm.Load(models.DoctorRels.User)).All(context.Background(), db)
-	if err != nil {
-		http.Error(w, "Error retrieving doctors", http.StatusInternalServerError)
-		return
-	}
-
-	combinedData := prepare.PrepareDoctor(doctors)
-
-	jsonDoctors, err := json.Marshal(combinedData)
-	if err != nil {
-		http.Error(w, "Error marshaling response", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonDoctors)
-}

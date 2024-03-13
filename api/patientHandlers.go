@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -73,7 +74,7 @@ func HandleGetAllPatient(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
-	patients, err := models.Patients(qm.Load(models.PatientRels.User)).All(context.Background(), db)
+	patients, err := models.Patients(qm.Load(models.PatientRels.User), qm.Load(models.PatientRels.Healthinsurance)).All(context.Background(), db)
 	if err != nil {
 		http.Error(w, "Error retrieving patients", http.StatusInternalServerError)
 		return
@@ -184,4 +185,45 @@ func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "patient updated successfully")
+}
+
+func HandlerAddHealthInsurenceInPatient(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
+		return
+	}
+
+	params := mux.Vars(r)
+	id := params["id"]
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Invalid patient ID", http.StatusBadRequest)
+		return
+	}
+
+	patient, err := models.FindPatient(context.Background(), db, intID)
+	if err != nil {
+		http.Error(w, "Failed to retrieve Patient", http.StatusInternalServerError)
+		return
+	}
+
+	var healthinsurance models.Healthinsurance
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&healthinsurance); err != nil {
+		http.Error(w, fmt.Sprintf("Error decoding JSON: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	if err := healthinsurance.Insert(context.Background(), db, boil.Infer()); err != nil {
+		http.Error(w, fmt.Sprintf("Error inserting new health insurance: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	patient.HealthinsuranceID = null.Int{Int: healthinsurance.HealthinsuranceID, Valid: true}
+	patient.Update(context.Background(), db, boil.Infer())
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprintf(w, "HealthInsurence added in patient successfully")
 }

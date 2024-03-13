@@ -37,9 +37,18 @@ func PreparePatient(patients models.PatientSlice) []map[string]interface{} {
 
 	for _, patient := range patients {
 		user := patient.R.User
+		healthInsurance := patient.R.Healthinsurance
+
+		var healthInsuranceName interface{}
+		if healthInsurance != nil {
+			healthInsuranceName = healthInsurance.Name
+		} else {
+			healthInsuranceName = nil
+		}
+
 		responseData := map[string]interface{}{
 			"patient_id":      patient.PatientID,
-			"healthInsurence": patient.HealthinsuranceID,
+			"healthInsurence": healthInsuranceName,
 			"user":            user,
 		}
 

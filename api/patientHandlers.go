@@ -121,7 +121,7 @@ func HandleDeletePatient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.ToLower(patientUser.Role) != "patient" {
-		http.Error(w, "Invalid role, expected doctor", http.StatusBadRequest)
+		http.Error(w, "Invalid role, expected patient", http.StatusBadRequest)
 		return
 	}
 
@@ -166,7 +166,7 @@ func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.ToLower(patientUser.Role) != "patient" {
-		http.Error(w, "Invalid role, expected doctor", http.StatusBadRequest)
+		http.Error(w, "Invalid role, expected patient", http.StatusBadRequest)
 		return
 	}
 
@@ -180,7 +180,7 @@ func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 
 	_, err = patientToUpdate.Update(context.Background(), db, boil.Infer())
 	if err != nil {
-		http.Error(w, "Error updating doctor", http.StatusInternalServerError)
+		http.Error(w, "Error updating patient", http.StatusInternalServerError)
 		return
 	}
 

@@ -18,7 +18,7 @@ import (
 )
 
 func HandleCreateDoctor(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
@@ -71,7 +71,7 @@ func HandleCreateDoctor(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleGetAllDoctors(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
+	if r.Method != http.MethodGet {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
@@ -95,7 +95,7 @@ func HandleGetAllDoctors(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleDeleteDoctor(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "DELETE" {
+	if r.Method != http.MethodDelete {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
@@ -135,7 +135,7 @@ func HandleDeleteDoctor(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandlerUpdateDoctor(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "PATCH" {
+	if r.Method != http.MethodPatch {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
@@ -184,6 +184,11 @@ func HandlerUpdateDoctor(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandlerAddHealthInsurenceInDoctor(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	params := mux.Vars(r)
 	id := params["id"]
 	intID, err := strconv.Atoi(id)
@@ -216,11 +221,11 @@ func HandlerAddHealthInsurenceInDoctor(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "HealthInsurence created successfully")
+	fmt.Fprintf(w, "HealthInsurence added in doctor successfully")
 }
 
 func HandlerGetAllDoctorsWithHealthInsurence(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
+	if r.Method != http.MethodGet {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}

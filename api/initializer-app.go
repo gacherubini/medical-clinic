@@ -15,7 +15,7 @@ const PORT = 8080
 
 func StartServer() {
 	for _, route := range routes {
-		r.HandleFunc(route.Path, route.Handler)
+		r.HandleFunc(route.Path, route.Handler).Methods(route.Method)
 	}
 
 	fmt.Printf("Starting server at port %d\n", PORT)

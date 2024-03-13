@@ -231,8 +231,11 @@ func HandlerGetHealthInsurenceDoctor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	combinedData := prepare.PrepareInsurence(doctors)
-
+	combinedData, err := prepare.PrepareInsurence(doctors)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	jsonDoctors, err := json.Marshal(combinedData)
 	if err != nil {
 		http.Error(w, "Error marshaling response", http.StatusInternalServerError)

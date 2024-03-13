@@ -1,6 +1,7 @@
 package prepare
 
 import (
+	"errors"
 	"medical-clinic/models"
 )
 
@@ -22,13 +23,17 @@ func PrepareDoctor(doctors models.DoctorSlice) []map[string]interface{} {
 	return combinedData
 }
 
-func PrepareInsurence(doctors models.DoctorSlice) []map[string]interface{} {
+func PrepareInsurence(doctors models.DoctorSlice) ([]map[string]interface{}, error) {
 
 	var combinedData []map[string]interface{}
 
 	for _, doctor := range doctors {
 		user := doctor.R.User
 		healthInsurance := doctor.R.Healthinsurance
+
+		if healthInsurance == nil {
+			return nil, errors.New("health insurance is nil")
+		}
 
 		responseData := map[string]interface{}{
 			"health_insurance": healthInsurance.Name,
@@ -38,5 +43,5 @@ func PrepareInsurence(doctors models.DoctorSlice) []map[string]interface{} {
 
 		combinedData = append(combinedData, responseData)
 	}
-	return combinedData
+	return combinedData, nil
 }

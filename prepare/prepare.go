@@ -5,7 +5,6 @@ import (
 )
 
 func PrepareDoctor(doctors models.DoctorSlice) []map[string]interface{} {
-
 	var combinedData []map[string]interface{}
 
 	for _, doctor := range doctors {
@@ -32,7 +31,6 @@ func PrepareDoctor(doctors models.DoctorSlice) []map[string]interface{} {
 }
 
 func PreparePatient(patients models.PatientSlice) []map[string]interface{} {
-
 	var combinedData []map[string]interface{}
 
 	for _, patient := range patients {
@@ -50,6 +48,22 @@ func PreparePatient(patients models.PatientSlice) []map[string]interface{} {
 			"patient_id":      patient.PatientID,
 			"healthInsurence": healthInsuranceName,
 			"user":            user,
+		}
+
+		combinedData = append(combinedData, responseData)
+	}
+	return combinedData
+}
+
+func PrepareAdmin(admins models.AdminSlice) []map[string]interface{} {
+	var combinedData []map[string]interface{}
+
+	for _, admin := range admins {
+		user := admin.R.User
+
+		responseData := map[string]interface{}{
+			"admin_id": admin.AdminID,
+			"user":     user,
 		}
 
 		combinedData = append(combinedData, responseData)

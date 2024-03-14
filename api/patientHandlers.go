@@ -125,6 +125,11 @@ func HandleDeletePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if patient.PatientID != intID {
+		http.Error(w, "Invalid ID, can delete others patients", http.StatusBadRequest)
+		return
+	}
+
 	_, err = patient.Delete(context.Background(), db)
 	if err != nil {
 		http.Error(w, "Error deleting this patient", http.StatusInternalServerError)
@@ -167,6 +172,11 @@ func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 
 	if strings.ToLower(patientUser.Role) != "patient" {
 		http.Error(w, "Invalid role, expected patient", http.StatusBadRequest)
+		return
+	}
+
+	if patient.PatientID != intID {
+		http.Error(w, "Invalid ID, can delete others patient", http.StatusBadRequest)
 		return
 	}
 

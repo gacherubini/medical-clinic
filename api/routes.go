@@ -11,10 +11,10 @@ type Route struct {
 }
 
 var routes = []Route{
-	{Path: "/user", Method: http.MethodPost, Handler: HandleCreateUser},
-	{Path: "/user", Method: http.MethodGet, Handler: HandleGetAllUser},
-	{Path: "/users/{id}", Method: http.MethodDelete, Handler: HandleDeleteUser},
-	{Path: "/users/{id}", Method: http.MethodPatch, Handler: HandleUpdateUser},
+	{Path: "/admin", Method: http.MethodPost, Handler: HandleCreateAdmin},
+	{Path: "/admin", Method: http.MethodGet, Handler: HandleGetAllAdmins},
+	{Path: "/admins/{id}", Method: http.MethodDelete, Handler: HandleDeleteAdmin},
+	{Path: "/admins/{id}", Method: http.MethodPatch, Handler: HandleUpdateAdmin},
 	{Path: "/patients", Method: http.MethodPost, Handler: HandleCreatePatient},
 	{Path: "/patients", Method: http.MethodGet, Handler: HandleGetAllPatient},
 	{Path: "/patients/{id}", Method: http.MethodDelete, Handler: HandleDeletePatient},

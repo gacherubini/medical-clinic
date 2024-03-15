@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"medical-clinic/models"
 	"medical-clinic/prepare"
+	"medical-clinic/utils"
 	"net/http"
 	"strconv"
 	"strings"
@@ -125,6 +126,10 @@ func HandleDeletePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !utils.IsAdminAllowed(w, r, db) {
+		return
+	}
+
 	if patient.PatientID != intID {
 		http.Error(w, "Invalid ID, can delete others patients", http.StatusBadRequest)
 		return
@@ -172,6 +177,10 @@ func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 
 	if strings.ToLower(patientUser.Role) != "patient" {
 		http.Error(w, "Invalid role, expected patient", http.StatusBadRequest)
+		return
+	}
+
+	if !utils.IsAdminAllowed(w, r, db) {
 		return
 	}
 

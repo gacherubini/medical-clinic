@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"medical-clinic/models"
 	"medical-clinic/prepare"
+	"medical-clinic/utils"
 	"net/http"
 	"strconv"
 	"strings"
@@ -131,6 +132,10 @@ func HandleDeleteDoctor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !utils.IsAdminAllowed(w, r, db) {
+		return
+	}
+
 	_, err = doctor.Delete(context.Background(), db)
 	if err != nil {
 		http.Error(w, "Error deleting this Doctor", http.StatusInternalServerError)
@@ -178,6 +183,10 @@ func HandlerUpdateDoctor(w http.ResponseWriter, r *http.Request) {
 
 	if doctor.DoctorID != intID {
 		http.Error(w, "Invalid ID, cant update others doctors", http.StatusBadRequest)
+		return
+	}
+
+	if !utils.IsAdminAllowed(w, r, db) {
 		return
 	}
 

@@ -66,7 +66,7 @@ func HandleCreateAdmin(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "Doctor created successfully")
+	fmt.Fprintf(w, "Admin created successfully")
 }
 
 func HandleGetAllAdmins(w http.ResponseWriter, r *http.Request) {

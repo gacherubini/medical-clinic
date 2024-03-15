@@ -126,11 +126,7 @@ func HandleDeletePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !utils.IsAdminAllowed(w, r, db) {
-		return
-	}
-
-	if patient.PatientID != intID {
+	if patient.PatientID != intID || !utils.IsAdminAllowed(w, r, db) {
 		http.Error(w, "Invalid ID, can delete others patients", http.StatusBadRequest)
 		return
 	}
@@ -180,11 +176,7 @@ func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !utils.IsAdminAllowed(w, r, db) {
-		return
-	}
-
-	if patient.PatientID != intID {
+	if patient.PatientID != intID || !utils.IsAdminAllowed(w, r, db) {
 		http.Error(w, "Invalid ID, can delete others patient", http.StatusBadRequest)
 		return
 	}

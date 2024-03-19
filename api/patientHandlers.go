@@ -126,11 +126,9 @@ func HandleDeletePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if utils.IsAdminAllowed(w, r, db) == false {
-		if patient.PatientID != intID {
-			http.Error(w, "Invalid ID, cant delete others doctors or isnt a admin", http.StatusBadRequest)
-			return
-		}
+	if !utils.IsAdminAllowed(w, r, db) && patient.PatientID != intID {
+		http.Error(w, "Invalid ID, cant delete others doctors or isnt a admin", http.StatusBadRequest)
+		return
 	}
 
 	_, err = patient.Delete(context.Background(), db)
@@ -178,11 +176,9 @@ func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if utils.IsAdminAllowed(w, r, db) == false {
-		if patient.PatientID != intID {
-			http.Error(w, "Invalid ID, cant delete others doctors or isnt a admin", http.StatusBadRequest)
-			return
-		}
+	if !utils.IsAdminAllowed(w, r, db) && patient.PatientID != intID {
+		http.Error(w, "Invalid ID, cant delete others doctors or isnt a admin", http.StatusBadRequest)
+		return
 	}
 
 	patientToUpdate := patient

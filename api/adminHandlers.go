@@ -16,24 +16,26 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
+type UserAdminStruct struct {
+	User  models.User
+	Admin models.Admin
+}
+
 func HandleCreateAdmin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var userData struct {
-		User  models.User  `json:"user"`
-		Admin models.Admin `json:"admin"`
-	}
+	var userAdmin UserAdminStruct
 
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&userData); err != nil {
+	if err := decoder.Decode(&userAdmin); err != nil {
 		http.Error(w, fmt.Sprintf("Error decoding JSON: %s", err), http.StatusBadRequest)
 		return
 	}
 
-	if strings.ToLower(userData.User.Role) != "admin" {
+	if strings.ToLower(userAdmin.User.Role) != "admin" {
 		http.Error(w, "Invalid role, expected admin", http.StatusBadRequest)
 		return
 	}
@@ -45,15 +47,15 @@ func HandleCreateAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
-	err = userData.User.Insert(context.Background(), tx, boil.Infer())
+	err = userAdmin.User.Insert(context.Background(), tx, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting user: %s", err), http.StatusInternalServerError)
 		return
 	}
 
-	userData.Admin.UserID = userData.User.UserID
+	userAdmin.Admin.UserID = userAdmin.User.UserID
 
-	err = userData.Admin.Insert(context.Background(), tx, boil.Infer())
+	err = userAdmin.Admin.Insert(context.Background(), tx, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting admin: %s", err), http.StatusInternalServerError)
 		return
@@ -75,7 +77,7 @@ func HandleGetAllAdmins(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	admins, err := models.Admins(qm.Load(models.DoctorRels.User)).All(context.Background(), db)
+	admins, err := models.Admins(qm.Load(models.AdminRels.User)).All(context.Background(), db)
 	if err != nil {
 		http.Error(w, "Error retrieving admins", http.StatusInternalServerError)
 		return

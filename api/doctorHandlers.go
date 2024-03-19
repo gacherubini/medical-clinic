@@ -18,24 +18,26 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
+type userDoctorStruct struct {
+	User   models.User
+	Doctor models.Doctor
+}
+
 func HandleCreateDoctor(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var userData struct {
-		User   models.User   `json:"user"`
-		Doctor models.Doctor `json:"doctor"`
-	}
+	var userDoctor userDoctorStruct
 
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&userData); err != nil {
+	if err := decoder.Decode(&userDoctor); err != nil {
 		http.Error(w, fmt.Sprintf("Error decoding JSON: %s", err), http.StatusBadRequest)
 		return
 	}
 
-	if strings.ToLower(userData.User.Role) != "doctor" {
+	if strings.ToLower(userDoctor.User.Role) != "doctor" {
 		http.Error(w, "Invalid role, expected doctor", http.StatusBadRequest)
 		return
 	}
@@ -47,15 +49,15 @@ func HandleCreateDoctor(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
-	err = userData.User.Insert(context.Background(), tx, boil.Infer())
+	err = userDoctor.User.Insert(context.Background(), tx, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting user: %s", err), http.StatusInternalServerError)
 		return
 	}
 
-	userData.Doctor.UserID = userData.User.UserID
+	userDoctor.Doctor.UserID = userDoctor.User.UserID
 
-	err = userData.Doctor.Insert(context.Background(), tx, boil.Infer())
+	err = userDoctor.Doctor.Insert(context.Background(), tx, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting doctor: %s", err), http.StatusInternalServerError)
 		return

@@ -4,8 +4,26 @@ import (
 	"medical-clinic/models"
 )
 
-func PrepareDoctor(doctors models.DoctorSlice) []map[string]interface{} {
-	var combinedData []map[string]interface{}
+type AdminUser struct {
+	Admin int          `json:"admin_id"`
+	User  *models.User `json:"user"`
+}
+
+type PatientUser struct {
+	Patient          int          `json:"patient_id"`
+	HealthInsurences interface{}  `json:"health"`
+	User             *models.User `json:"user"`
+}
+
+type DoctorUser struct {
+	Doctor            int          `json:"doctor_id"`
+	HealthInsurences  interface{}  `json:"health"`
+	DoctorSpecialties string       `json:"doctor_specialties"`
+	User              *models.User `json:"user"`
+}
+
+func PrepareDoctor(doctors models.DoctorSlice) []DoctorUser {
+	var combinedData []DoctorUser
 
 	for _, doctor := range doctors {
 		user := doctor.R.User
@@ -18,20 +36,20 @@ func PrepareDoctor(doctors models.DoctorSlice) []map[string]interface{} {
 			healthInsuranceName = nil
 		}
 
-		responseData := map[string]interface{}{
-			"doctor_id":        doctor.DoctorID,
-			"health_insurance": healthInsuranceName,
-			"specialties":      doctor.Specialties,
-			"user":             user,
+		responseData := &DoctorUser{
+			Doctor:            doctor.DoctorID,
+			HealthInsurences:  healthInsuranceName,
+			DoctorSpecialties: doctor.Specialties,
+			User:              user,
 		}
 
-		combinedData = append(combinedData, responseData)
+		combinedData = append(combinedData, *responseData)
 	}
 	return combinedData
 }
 
-func PreparePatient(patients models.PatientSlice) []map[string]interface{} {
-	var combinedData []map[string]interface{}
+func PreparePatient(patients models.PatientSlice) []PatientUser {
+	var combinedData []PatientUser
 
 	for _, patient := range patients {
 		user := patient.R.User
@@ -44,29 +62,31 @@ func PreparePatient(patients models.PatientSlice) []map[string]interface{} {
 			healthInsuranceName = nil
 		}
 
-		responseData := map[string]interface{}{
-			"patient_id":      patient.PatientID,
-			"healthInsurence": healthInsuranceName,
-			"user":            user,
+		responseData := &PatientUser{
+			Patient:          patient.PatientID,
+			HealthInsurences: healthInsuranceName,
+			User:             user,
 		}
 
-		combinedData = append(combinedData, responseData)
+		combinedData = append(combinedData, *responseData)
+
 	}
 	return combinedData
 }
 
-func PrepareAdmin(admins models.AdminSlice) []map[string]interface{} {
-	var combinedData []map[string]interface{}
+func PrepareAdmin(admins models.AdminSlice) []AdminUser {
+	var combinedData []AdminUser
 
 	for _, admin := range admins {
 		user := admin.R.User
 
-		responseData := map[string]interface{}{
-			"admin_id": admin.AdminID,
-			"user":     user,
+		responseData := &AdminUser{
+			Admin: admin.AdminID,
+			User:  user,
 		}
 
-		combinedData = append(combinedData, responseData)
+		combinedData = append(combinedData, *responseData)
 	}
+
 	return combinedData
 }

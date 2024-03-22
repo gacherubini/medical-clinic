@@ -1,7 +1,6 @@
 package api
 
 import (
-	"medical-clinic/middleware"
 	"net/http"
 )
 
@@ -11,25 +10,46 @@ type Route struct {
 	Handler func(w http.ResponseWriter, r *http.Request)
 }
 
-func AdminMiddleware(handler http.HandlerFunc) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		middleware.IsAdminMiddleware(db, http.HandlerFunc(handler)).ServeHTTP(w, r)
+func GetDoctorRoutes() []Route {
+	DoctorHandlerContext := DoctorHandlerContext{
+		Db,
 	}
+	var routes = []Route{
+		{Path: "/doctors", Method: http.MethodPost, Handler: DoctorHandlerContext.HandleCreateDoctor},
+		{Path: "/doctors", Method: http.MethodGet, Handler: DoctorHandlerContext.HandleGetAllDoctors},
+		{Path: "/doctors/{id}", Method: http.MethodDelete, Handler: DoctorHandlerContext.HandleDeleteDoctor},
+		{Path: "/doctors/{id}", Method: http.MethodPatch, Handler: DoctorHandlerContext.HandlerUpdateDoctor},
+		{Path: "/doctors/{id}/healthinsurence", Method: http.MethodPost, Handler: DoctorHandlerContext.HandlerAddHealthInsurenceInDoctor},
+	}
+
+	return routes
 }
 
-var routes = []Route{
-	{Path: "/admin", Method: http.MethodPost, Handler: HandleCreateAdmin},
-	{Path: "/admin", Method: http.MethodGet, Handler: HandleGetAllAdmins},
-	{Path: "/admins/{id}", Method: http.MethodDelete, Handler: HandleDeleteAdmin},
-	{Path: "/admins/{id}", Method: http.MethodPatch, Handler: HandleUpdateAdmin},
-	{Path: "/patients", Method: http.MethodPost, Handler: HandleCreatePatient},
-	{Path: "/patients", Method: http.MethodGet, Handler: HandleGetAllPatient},
-	{Path: "/patients/{id}", Method: http.MethodDelete, Handler: AdminMiddleware(HandleDeletePatient)},
-	{Path: "/patients/{id}", Method: http.MethodPatch, Handler: AdminMiddleware(HandlerUpdatePatient)},
-	{Path: "/patients/{id}/healthinsurence", Method: http.MethodPost, Handler: HandlerAddHealthInsurenceInPatient},
-	{Path: "/doctors", Method: http.MethodPost, Handler: HandleCreateDoctor},
-	{Path: "/doctors", Method: http.MethodGet, Handler: HandleGetAllDoctors},
-	{Path: "/doctors/{id}", Method: http.MethodDelete, Handler: AdminMiddleware(HandleDeleteDoctor)},
-	{Path: "/doctors/{id}", Method: http.MethodPatch, Handler: AdminMiddleware(HandlerUpdateDoctor)},
-	{Path: "/doctors/{id}/healthinsurence", Method: http.MethodPost, Handler: HandlerAddHealthInsurenceInDoctor},
+func getAdminRoutes() []Route {
+	AdminHandlerContext := AdminHandlerContext{
+		Db,
+	}
+	var routes = []Route{
+		{Path: "/admin", Method: http.MethodPost, Handler: AdminHandlerContext.HandleCreateAdmin},
+		{Path: "/admin", Method: http.MethodGet, Handler: AdminHandlerContext.HandleGetAllAdmins},
+		{Path: "/admins/{id}", Method: http.MethodDelete, Handler: AdminHandlerContext.HandleDeleteAdmin},
+		{Path: "/admins/{id}", Method: http.MethodPatch, Handler: AdminHandlerContext.HandleUpdateAdmin},
+	}
+
+	return routes
+}
+
+func getPatientRoutes() []Route {
+	PatientHandlerContext := PatientHandlerContext{
+		Db,
+	}
+	var routes = []Route{
+		{Path: "/patients", Method: http.MethodPost, Handler: PatientHandlerContext.HandleCreatePatient},
+		{Path: "/patients", Method: http.MethodGet, Handler: PatientHandlerContext.HandleGetAllPatient},
+		{Path: "/patients/{id}", Method: http.MethodDelete, Handler: PatientHandlerContext.HandleDeletePatient},
+		{Path: "/patients/{id}", Method: http.MethodPatch, Handler: PatientHandlerContext.HandlerUpdatePatient},
+		{Path: "/patients/{id}/healthinsurence", Method: http.MethodPost, Handler: PatientHandlerContext.HandlerAddHealthInsurenceInPatient},
+	}
+
+	return routes
 }

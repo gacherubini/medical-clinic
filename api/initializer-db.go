@@ -15,10 +15,10 @@ const (
 
 var psqlconn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
-var db *sql.DB
+var Db *sql.DB
 
 func init() {
 	var err error
-	db, err = sql.Open("postgres", psqlconn)
+	Db, err = sql.Open("postgres", psqlconn)
 	CheckError(err)
 }

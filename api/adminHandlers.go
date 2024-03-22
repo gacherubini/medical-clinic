@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"medical-clinic/models"
@@ -21,7 +22,11 @@ type UserAdminStruct struct {
 	Admin models.Admin
 }
 
-func HandleCreateAdmin(w http.ResponseWriter, r *http.Request) {
+type AdminHandlerContext struct {
+	Db *sql.DB
+}
+
+func (contextHandler *AdminHandlerContext) HandleCreateAdmin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
@@ -40,7 +45,7 @@ func HandleCreateAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tx, err := db.Begin()
+	tx, err := contextHandler.Db.Begin()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error starting transaction: %s", err), http.StatusInternalServerError)
 		return
@@ -71,13 +76,13 @@ func HandleCreateAdmin(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Admin created successfully")
 }
 
-func HandleGetAllAdmins(w http.ResponseWriter, r *http.Request) {
+func (contextHandler *AdminHandlerContext) HandleGetAllAdmins(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
 
-	admins, err := models.Admins(qm.Load(models.AdminRels.User)).All(context.Background(), db)
+	admins, err := models.Admins(qm.Load(models.AdminRels.User)).All(context.Background(), contextHandler.Db)
 	if err != nil {
 		http.Error(w, "Error retrieving admins", http.StatusInternalServerError)
 		return
@@ -96,7 +101,7 @@ func HandleGetAllAdmins(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonDoctors)
 }
 
-func HandleDeleteAdmin(w http.ResponseWriter, r *http.Request) {
+func (contextHandler *AdminHandlerContext) HandleDeleteAdmin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
@@ -111,13 +116,13 @@ func HandleDeleteAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	admin, err := models.FindAdmin(context.Background(), db, intID)
+	admin, err := models.FindAdmin(context.Background(), contextHandler.Db, intID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve Admin", http.StatusInternalServerError)
 		return
 	}
 
-	AdminUser, err := models.FindUser(context.Background(), db, admin.UserID)
+	AdminUser, err := models.FindUser(context.Background(), contextHandler.Db, admin.UserID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve User", http.StatusInternalServerError)
 		return
@@ -128,12 +133,12 @@ func HandleDeleteAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = admin.Delete(context.Background(), db)
+	_, err = admin.Delete(context.Background(), contextHandler.Db)
 	if err != nil {
 		http.Error(w, "Error deleting this admin", http.StatusInternalServerError)
 	}
 
-	_, err = AdminUser.Delete(context.Background(), db)
+	_, err = AdminUser.Delete(context.Background(), contextHandler.Db)
 	if err != nil {
 		http.Error(w, "Error deleting this User from Admin", http.StatusInternalServerError)
 	}
@@ -141,7 +146,7 @@ func HandleDeleteAdmin(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Admin deleted successfully")
 }
 
-func HandleUpdateAdmin(w http.ResponseWriter, r *http.Request) {
+func (contextHandler *AdminHandlerContext) HandleUpdateAdmin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
@@ -156,13 +161,13 @@ func HandleUpdateAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	admin, err := models.FindAdmin(context.Background(), db, intID)
+	admin, err := models.FindAdmin(context.Background(), contextHandler.Db, intID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve admin", http.StatusInternalServerError)
 		return
 	}
 
-	adminUser, err := models.FindUser(context.Background(), db, admin.UserID)
+	adminUser, err := models.FindUser(context.Background(), contextHandler.Db, admin.UserID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve User", http.StatusInternalServerError)
 		return
@@ -181,7 +186,7 @@ func HandleUpdateAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = adminToUpdate.Update(context.Background(), db, boil.Infer())
+	_, err = adminToUpdate.Update(context.Background(), contextHandler.Db, boil.Infer())
 	if err != nil {
 		http.Error(w, "Error updating admin", http.StatusInternalServerError)
 		return

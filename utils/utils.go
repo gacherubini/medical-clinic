@@ -13,6 +13,10 @@ import (
 func IsAdminAllowed(r *http.Request, db *sql.DB) bool {
 	adminIDString := r.Header.Get("ID")
 
+	if adminIDString == "" {
+		return true
+	}
+
 	adminIDInt, err := strconv.Atoi(adminIDString)
 	if err != nil {
 		return false

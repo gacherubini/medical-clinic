@@ -7,9 +7,13 @@ import (
 	"net/http"
 )
 
-func IsAdminMiddleware(db *sql.DB, next http.Handler) http.Handler {
+type AdminMiddlewareContext struct {
+	Db *sql.DB
+}
+
+func (AdminMiddlewareContext *AdminMiddlewareContext) IsAdminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !utils.IsAdminAllowed(r, db) {
+		if !utils.IsAdminAllowed(r, AdminMiddlewareContext.Db) {
 			fmt.Fprintf(w, "Not an admin or is a diferent User")
 			return
 		}

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"medical-clinic/models"
@@ -17,44 +18,50 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-func HandleCreateDoctor(w http.ResponseWriter, r *http.Request) {
+type userDoctorStruct struct {
+	User   models.User
+	Doctor models.Doctor
+}
+
+type DoctorHandlerContext struct {
+	Db *sql.DB
+}
+
+func (contextHandler *DoctorHandlerContext) HandleCreateDoctor(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var userData struct {
-		User   models.User   `json:"user"`
-		Doctor models.Doctor `json:"doctor"`
-	}
+	var userDoctor userDoctorStruct
 
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&userData); err != nil {
+	if err := decoder.Decode(&userDoctor); err != nil {
 		http.Error(w, fmt.Sprintf("Error decoding JSON: %s", err), http.StatusBadRequest)
 		return
 	}
 
-	if strings.ToLower(userData.User.Role) != "doctor" {
+	if strings.ToLower(userDoctor.User.Role) != "doctor" {
 		http.Error(w, "Invalid role, expected doctor", http.StatusBadRequest)
 		return
 	}
 
-	tx, err := db.Begin()
+	tx, err := contextHandler.Db.Begin()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error starting transaction: %s", err), http.StatusInternalServerError)
 		return
 	}
 	defer tx.Rollback()
 
-	err = userData.User.Insert(context.Background(), tx, boil.Infer())
+	err = userDoctor.User.Insert(context.Background(), tx, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting user: %s", err), http.StatusInternalServerError)
 		return
 	}
 
-	userData.Doctor.UserID = userData.User.UserID
+	userDoctor.Doctor.UserID = userDoctor.User.UserID
 
-	err = userData.Doctor.Insert(context.Background(), tx, boil.Infer())
+	err = userDoctor.Doctor.Insert(context.Background(), tx, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting doctor: %s", err), http.StatusInternalServerError)
 		return
@@ -70,12 +77,12 @@ func HandleCreateDoctor(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Doctor created successfully")
 }
 
-func HandleGetAllDoctors(w http.ResponseWriter, r *http.Request) {
+func (contextHandler *DoctorHandlerContext) HandleGetAllDoctors(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
-	doctors, err := models.Doctors(qm.Load(models.DoctorRels.User), qm.Load(models.DoctorRels.Healthinsurance)).All(context.Background(), db)
+	doctors, err := models.Doctors(qm.Load(models.DoctorRels.User), qm.Load(models.DoctorRels.Healthinsurance)).All(context.Background(), contextHandler.Db)
 	if err != nil {
 		http.Error(w, "Error retrieving doctors", http.StatusInternalServerError)
 		return
@@ -94,7 +101,7 @@ func HandleGetAllDoctors(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonDoctors)
 }
 
-func HandleDeleteDoctor(w http.ResponseWriter, r *http.Request) {
+func (contextHandler *DoctorHandlerContext) HandleDeleteDoctor(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
@@ -109,13 +116,13 @@ func HandleDeleteDoctor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	doctor, err := models.FindDoctor(context.Background(), db, intID)
+	doctor, err := models.FindDoctor(context.Background(), contextHandler.Db, intID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve Doctor", http.StatusInternalServerError)
 		return
 	}
 
-	doctorUser, err := models.FindUser(context.Background(), db, doctor.UserID)
+	doctorUser, err := models.FindUser(context.Background(), contextHandler.Db, doctor.UserID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve User", http.StatusInternalServerError)
 		return
@@ -126,12 +133,17 @@ func HandleDeleteDoctor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = doctor.Delete(context.Background(), db)
+	if doctor.DoctorID != intID {
+		http.Error(w, "Invalid ID, cant delete others doctors", http.StatusBadRequest)
+		return
+	}
+
+	_, err = doctor.Delete(context.Background(), contextHandler.Db)
 	if err != nil {
 		http.Error(w, "Error deleting this Doctor", http.StatusInternalServerError)
 	}
 
-	_, err = doctorUser.Delete(context.Background(), db)
+	_, err = doctorUser.Delete(context.Background(), contextHandler.Db)
 	if err != nil {
 		http.Error(w, "Error deleting this User from Doctor", http.StatusInternalServerError)
 	}
@@ -139,7 +151,7 @@ func HandleDeleteDoctor(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Doctor deleted successfully")
 }
 
-func HandlerUpdateDoctor(w http.ResponseWriter, r *http.Request) {
+func (contextHandler *DoctorHandlerContext) HandlerUpdateDoctor(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
@@ -154,13 +166,13 @@ func HandlerUpdateDoctor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	doctor, err := models.FindDoctor(context.Background(), db, intID)
+	doctor, err := models.FindDoctor(context.Background(), contextHandler.Db, intID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve doctor", http.StatusInternalServerError)
 		return
 	}
 
-	doctorUser, err := models.FindUser(context.Background(), db, doctor.UserID)
+	doctorUser, err := models.FindUser(context.Background(), contextHandler.Db, doctor.UserID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve User", http.StatusInternalServerError)
 		return
@@ -179,7 +191,7 @@ func HandlerUpdateDoctor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = doctorToUpdate.Update(context.Background(), db, boil.Infer())
+	_, err = doctorToUpdate.Update(context.Background(), contextHandler.Db, boil.Infer())
 	if err != nil {
 		http.Error(w, "Error updating doctor", http.StatusInternalServerError)
 		return
@@ -188,7 +200,7 @@ func HandlerUpdateDoctor(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "doctor updated successfully")
 }
 
-func HandlerAddHealthInsurenceInDoctor(w http.ResponseWriter, r *http.Request) {
+func (contextHandler *DoctorHandlerContext) HandlerAddHealthInsurenceInDoctor(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
@@ -202,7 +214,7 @@ func HandlerAddHealthInsurenceInDoctor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	doctor, err := models.FindDoctor(context.Background(), db, intID)
+	doctor, err := models.FindDoctor(context.Background(), contextHandler.Db, intID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve Doctor", http.StatusInternalServerError)
 		return
@@ -216,13 +228,13 @@ func HandlerAddHealthInsurenceInDoctor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := healthinsurance.Insert(context.Background(), db, boil.Infer()); err != nil {
+	if err := healthinsurance.Insert(context.Background(), contextHandler.Db, boil.Infer()); err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting new health insurance: %s", err), http.StatusInternalServerError)
 		return
 	}
 
 	doctor.HealthinsuranceID = null.Int{Int: healthinsurance.HealthinsuranceID, Valid: true}
-	doctor.Update(context.Background(), db, boil.Infer())
+	doctor.Update(context.Background(), contextHandler.Db, boil.Infer())
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

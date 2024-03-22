@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"medical-clinic/models"
@@ -16,44 +17,50 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-func HandleCreatePatient(w http.ResponseWriter, r *http.Request) {
+type userPatientStruct struct {
+	User    models.User
+	Patient models.Patient
+}
+
+type PatientHandlerContext struct {
+	Db *sql.DB
+}
+
+func (contextHandler PatientHandlerContext) HandleCreatePatient(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var userData struct {
-		User    models.User    `json:"user"`
-		Patient models.Patient `json:"patient"`
-	}
+	var userPatient userPatientStruct
 
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&userData); err != nil {
+	if err := decoder.Decode(&userPatient); err != nil {
 		http.Error(w, fmt.Sprintf("Error decoding JSON: %s", err), http.StatusBadRequest)
 		return
 	}
 
-	if strings.ToLower(userData.User.Role) != "patient" {
+	if strings.ToLower(userPatient.User.Role) != "patient" {
 		http.Error(w, "Invalid role, expected patient", http.StatusBadRequest)
 		return
 	}
 
-	tx, err := db.Begin()
+	tx, err := contextHandler.Db.Begin()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error starting transaction: %s", err), http.StatusInternalServerError)
 		return
 	}
 	defer tx.Rollback()
 
-	err = userData.User.Insert(context.Background(), tx, boil.Infer())
+	err = userPatient.User.Insert(context.Background(), tx, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting user: %s", err), http.StatusInternalServerError)
 		return
 	}
 
-	userData.Patient.UserID = userData.User.UserID
+	userPatient.Patient.UserID = userPatient.User.UserID
 
-	err = userData.Patient.Insert(context.Background(), tx, boil.Infer())
+	err = userPatient.Patient.Insert(context.Background(), tx, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting Patient: %s", err), http.StatusInternalServerError)
 		return
@@ -69,12 +76,12 @@ func HandleCreatePatient(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Patient created successfully")
 }
 
-func HandleGetAllPatient(w http.ResponseWriter, r *http.Request) {
+func (contextHandler PatientHandlerContext) HandleGetAllPatient(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
-	patients, err := models.Patients(qm.Load(models.PatientRels.User), qm.Load(models.PatientRels.Healthinsurance)).All(context.Background(), db)
+	patients, err := models.Patients(qm.Load(models.PatientRels.User), qm.Load(models.PatientRels.Healthinsurance)).All(context.Background(), contextHandler.Db)
 	if err != nil {
 		http.Error(w, "Error retrieving patients", http.StatusInternalServerError)
 		return
@@ -93,7 +100,7 @@ func HandleGetAllPatient(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonPatient)
 }
 
-func HandleDeletePatient(w http.ResponseWriter, r *http.Request) {
+func (contextHandler PatientHandlerContext) HandleDeletePatient(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
@@ -108,13 +115,13 @@ func HandleDeletePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	patient, err := models.FindPatient(context.Background(), db, intID)
+	patient, err := models.FindPatient(context.Background(), contextHandler.Db, intID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve patient", http.StatusInternalServerError)
 		return
 	}
 
-	patientUser, err := models.FindUser(context.Background(), db, patient.UserID)
+	patientUser, err := models.FindUser(context.Background(), contextHandler.Db, patient.UserID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve User", http.StatusInternalServerError)
 		return
@@ -125,12 +132,12 @@ func HandleDeletePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = patient.Delete(context.Background(), db)
+	_, err = patient.Delete(context.Background(), contextHandler.Db)
 	if err != nil {
 		http.Error(w, "Error deleting this patient", http.StatusInternalServerError)
 	}
 
-	_, err = patientUser.Delete(context.Background(), db)
+	_, err = patientUser.Delete(context.Background(), contextHandler.Db)
 	if err != nil {
 		http.Error(w, "Error deleting this User from patient", http.StatusInternalServerError)
 	}
@@ -138,7 +145,7 @@ func HandleDeletePatient(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Patient deleted successfully")
 }
 
-func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
+func (contextHandler PatientHandlerContext) HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
@@ -153,13 +160,13 @@ func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	patient, err := models.FindPatient(context.Background(), db, intID)
+	patient, err := models.FindPatient(context.Background(), contextHandler.Db, intID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve patient", http.StatusInternalServerError)
 		return
 	}
 
-	patientUser, err := models.FindUser(context.Background(), db, patient.UserID)
+	patientUser, err := models.FindUser(context.Background(), contextHandler.Db, patient.UserID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve User", http.StatusInternalServerError)
 		return
@@ -178,7 +185,7 @@ func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = patientToUpdate.Update(context.Background(), db, boil.Infer())
+	_, err = patientToUpdate.Update(context.Background(), contextHandler.Db, boil.Infer())
 	if err != nil {
 		http.Error(w, "Error updating patient", http.StatusInternalServerError)
 		return
@@ -187,7 +194,7 @@ func HandlerUpdatePatient(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "patient updated successfully")
 }
 
-func HandlerAddHealthInsurenceInPatient(w http.ResponseWriter, r *http.Request) {
+func (contextHandler PatientHandlerContext) HandlerAddHealthInsurenceInPatient(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
@@ -201,7 +208,7 @@ func HandlerAddHealthInsurenceInPatient(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	patient, err := models.FindPatient(context.Background(), db, intID)
+	patient, err := models.FindPatient(context.Background(), contextHandler.Db, intID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve Patient", http.StatusInternalServerError)
 		return
@@ -215,13 +222,13 @@ func HandlerAddHealthInsurenceInPatient(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := healthinsurance.Insert(context.Background(), db, boil.Infer()); err != nil {
+	if err := healthinsurance.Insert(context.Background(), contextHandler.Db, boil.Infer()); err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting new health insurance: %s", err), http.StatusInternalServerError)
 		return
 	}
 
 	patient.HealthinsuranceID = null.Int{Int: healthinsurance.HealthinsuranceID, Valid: true}
-	patient.Update(context.Background(), db, boil.Infer())
+	patient.Update(context.Background(), contextHandler.Db, boil.Infer())
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

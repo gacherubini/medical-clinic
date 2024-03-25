@@ -1,6 +1,10 @@
 package api
 
 import (
+	"medical-clinic/admin"
+	"medical-clinic/doctor"
+	"medical-clinic/patient"
+
 	"net/http"
 )
 
@@ -11,8 +15,8 @@ type Route struct {
 }
 
 func GetDoctorRoutes() []Route {
-	DoctorHandlerContext := DoctorHandlerContext{
-		Db,
+	DoctorHandlerContext := doctor.DoctorHandlerContext{
+		Db: Db,
 	}
 	var routes = []Route{
 		{Path: "/doctors", Method: http.MethodPost, Handler: DoctorHandlerContext.HandleCreateDoctor},
@@ -26,8 +30,8 @@ func GetDoctorRoutes() []Route {
 }
 
 func getAdminRoutes() []Route {
-	AdminHandlerContext := AdminHandlerContext{
-		Db,
+	AdminHandlerContext := admin.AdminHandlerContext{
+		Db: Db,
 	}
 	var routes = []Route{
 		{Path: "/admin", Method: http.MethodPost, Handler: AdminHandlerContext.HandleCreateAdmin},
@@ -40,8 +44,8 @@ func getAdminRoutes() []Route {
 }
 
 func getPatientRoutes() []Route {
-	PatientHandlerContext := PatientHandlerContext{
-		Db,
+	PatientHandlerContext := patient.PatientHandlerContext{
+		Db: Db,
 	}
 	var routes = []Route{
 		{Path: "/patients", Method: http.MethodPost, Handler: PatientHandlerContext.HandleCreatePatient},

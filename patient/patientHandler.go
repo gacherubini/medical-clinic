@@ -1,4 +1,4 @@
-package api
+package patient
 
 import (
 	"context"

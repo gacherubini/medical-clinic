@@ -16,6 +16,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type userDoctorStruct struct {
@@ -41,19 +42,20 @@ func (contextHandler *DoctorHandlerContext) HandleCreateDoctor(w http.ResponseWr
 		return
 	}
 
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userDoctor.User.HashPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error generating hashPassword: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	userDoctor.User.HashPassword = string(passwordHash)
+
 	if strings.ToLower(userDoctor.User.Role) != "doctor" {
 		http.Error(w, "Invalid role, expected doctor", http.StatusBadRequest)
 		return
 	}
 
-	tx, err := contextHandler.Db.Begin()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error starting transaction: %s", err), http.StatusInternalServerError)
-		return
-	}
-	defer tx.Rollback()
-
-	err = userDoctor.User.Insert(context.Background(), tx, boil.Infer())
+	err = userDoctor.User.Insert(context.Background(), contextHandler.Db, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting user: %s", err), http.StatusInternalServerError)
 		return
@@ -61,14 +63,9 @@ func (contextHandler *DoctorHandlerContext) HandleCreateDoctor(w http.ResponseWr
 
 	userDoctor.Doctor.UserID = userDoctor.User.UserID
 
-	err = userDoctor.Doctor.Insert(context.Background(), tx, boil.Infer())
+	err = userDoctor.Doctor.Insert(context.Background(), contextHandler.Db, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting doctor: %s", err), http.StatusInternalServerError)
-		return
-	}
-	err = tx.Commit()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error committing transaction: %s", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -82,6 +79,7 @@ func (contextHandler *DoctorHandlerContext) HandleGetAllDoctors(w http.ResponseW
 		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
 		return
 	}
+
 	doctors, err := models.Doctors(qm.Load(models.DoctorRels.User), qm.Load(models.DoctorRels.Healthinsurance)).All(context.Background(), contextHandler.Db)
 	if err != nil {
 		http.Error(w, "Error retrieving doctors", http.StatusInternalServerError)

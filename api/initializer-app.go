@@ -34,6 +34,10 @@ func StartServer() {
 		r.HandleFunc(route.Path, route.Handler).Methods(route.Method)
 	}
 
+	for _, route := range getAuthRoutes() {
+		r.HandleFunc(route.Path, route.Handler).Methods(route.Method)
+	}
+
 	fmt.Printf("Starting server at port %d\n", PORT)
 
 	defer Db.Close()

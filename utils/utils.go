@@ -3,10 +3,14 @@ package utils
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"medical-clinic/models"
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
 
@@ -63,4 +67,19 @@ func isUserAllowed(r *http.Request, db *sql.DB) bool {
 		}
 	}
 	return false
+}
+
+func GenereteToken(userId int) (string, error) {
+	token_lifespan := 30
+	fmt.Println(userId)
+
+	claims := jwt.MapClaims{}
+	claims["authorized"] = true
+	claims["user_id"] = userId
+	claims["exp"] = time.Now().Add(time.Minute * time.Duration(token_lifespan)).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenToReturn, err := token.SignedString(os.Getenv("API_SECRET"))
+
+	return tokenToReturn, err
+
 }

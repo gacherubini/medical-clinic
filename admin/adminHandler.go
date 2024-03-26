@@ -45,14 +45,7 @@ func (contextHandler *AdminHandlerContext) HandleCreateAdmin(w http.ResponseWrit
 		return
 	}
 
-	tx, err := contextHandler.Db.Begin()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error starting transaction: %s", err), http.StatusInternalServerError)
-		return
-	}
-	defer tx.Rollback()
-
-	err = userAdmin.User.Insert(context.Background(), tx, boil.Infer())
+	err := userAdmin.User.Insert(context.Background(), contextHandler.Db, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting user: %s", err), http.StatusInternalServerError)
 		return
@@ -60,14 +53,9 @@ func (contextHandler *AdminHandlerContext) HandleCreateAdmin(w http.ResponseWrit
 
 	userAdmin.Admin.UserID = userAdmin.User.UserID
 
-	err = userAdmin.Admin.Insert(context.Background(), tx, boil.Infer())
+	err = userAdmin.Admin.Insert(context.Background(), contextHandler.Db, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting admin: %s", err), http.StatusInternalServerError)
-		return
-	}
-	err = tx.Commit()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error committing transaction: %s", err), http.StatusInternalServerError)
 		return
 	}
 

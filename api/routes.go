@@ -2,6 +2,7 @@ package api
 
 import (
 	"medical-clinic/admin"
+	"medical-clinic/auth"
 	"medical-clinic/doctor"
 	"medical-clinic/patient"
 
@@ -18,6 +19,7 @@ func GetDoctorRoutes() []Route {
 	DoctorHandlerContext := doctor.DoctorHandlerContext{
 		Db: Db,
 	}
+
 	var routes = []Route{
 		{Path: "/doctors", Method: http.MethodPost, Handler: DoctorHandlerContext.HandleCreateDoctor},
 		{Path: "/doctors", Method: http.MethodGet, Handler: DoctorHandlerContext.HandleGetAllDoctors},
@@ -53,6 +55,18 @@ func getPatientRoutes() []Route {
 		{Path: "/patients/{id}", Method: http.MethodDelete, Handler: PatientHandlerContext.HandleDeletePatient},
 		{Path: "/patients/{id}", Method: http.MethodPatch, Handler: PatientHandlerContext.HandlerUpdatePatient},
 		{Path: "/patients/{id}/healthinsurence", Method: http.MethodPost, Handler: PatientHandlerContext.HandlerAddHealthInsurenceInPatient},
+	}
+
+	return routes
+}
+
+func getAuthRoutes() []Route {
+	AuthHandlerContext := auth.LoginHandlerContext{
+		Db: Db,
+	}
+
+	var routes = []Route{
+		{Path: "/login", Method: http.MethodPost, Handler: AuthHandlerContext.LoginHandler},
 	}
 
 	return routes

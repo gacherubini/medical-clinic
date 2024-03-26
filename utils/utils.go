@@ -78,8 +78,7 @@ func GenereteToken(userId int) (string, error) {
 	claims["user_id"] = userId
 	claims["exp"] = time.Now().Add(time.Minute * time.Duration(token_lifespan)).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenToReturn, err := token.SignedString(os.Getenv("API_SECRET"))
-
+	tokenToReturn, err := token.SignedString([]byte(os.Getenv("API_SECRET")))
 	return tokenToReturn, err
 
 }

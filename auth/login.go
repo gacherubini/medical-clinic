@@ -39,13 +39,13 @@ func (contextHandler *LoginHandlerContext) LoginHandler(w http.ResponseWriter, r
 
 	user, err := models.Users(qm.Where("email = ?", payload.Email)).One(context.Background(), contextHandler.Db)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid credentials: ", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid credentials"), http.StatusBadRequest)
 		return
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(payload.Password))
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid credentials: ", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid credential "), http.StatusBadRequest)
 		return
 	}
 
@@ -63,5 +63,7 @@ func (contextHandler *LoginHandlerContext) LoginHandler(w http.ResponseWriter, r
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Token:")
 	w.Write(jsonResponse)
+
 }

@@ -13,7 +13,6 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/crypto/bcrypt"
@@ -226,12 +225,14 @@ func (contextHandler *DoctorHandlerContext) HandlerAddHealthInsurenceInDoctor(w 
 		return
 	}
 
-	if err := healthinsurance.Insert(context.Background(), contextHandler.Db, boil.Infer()); err != nil {
-		http.Error(w, fmt.Sprintf("Error inserting new health insurance: %s", err), http.StatusInternalServerError)
+	healthinsuranceFound, err := models.Healthinsurances(qm.Where("name = ?", healthinsurance.Name)).One(context.Background(), contextHandler.Db)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Insurence doest exist"), http.StatusBadRequest)
 		return
 	}
 
-	doctor.HealthinsuranceID = null.Int{Int: healthinsurance.HealthinsuranceID, Valid: true}
+	err = healthinsuranceFound.AddDoctors(context.Background(), contextHandler.Db, true, doctor)
+
 	doctor.Update(context.Background(), contextHandler.Db, boil.Infer())
 
 	w.Header().Set("Content-Type", "application/json")

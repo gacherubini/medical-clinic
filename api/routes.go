@@ -40,6 +40,8 @@ func getAdminRoutes() []Route {
 		{Path: "/admin", Method: http.MethodGet, Handler: AdminHandlerContext.HandleGetAllAdmins},
 		{Path: "/admins/{id}", Method: http.MethodDelete, Handler: AdminHandlerContext.HandleDeleteAdmin},
 		{Path: "/admins/{id}", Method: http.MethodPatch, Handler: AdminHandlerContext.HandleUpdateAdmin},
+		{Path: "/admins/healthinsurence", Method: http.MethodPost, Handler: AdminHandlerContext.HandleAdminCreateHealthInsurence},
+		{Path: "/admins/healthinsurence", Method: http.MethodGet, Handler: AdminHandlerContext.HandleAdminGetAllHealthInsurence},
 	}
 
 	return routes

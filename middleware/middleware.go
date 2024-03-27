@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"medical-clinic/utils"
 	"net/http"
+
+	_ "github.com/lib/pq"
 )
 
 type AdminMiddlewareContext struct {

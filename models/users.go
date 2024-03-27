@@ -23,65 +23,79 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	UserID int    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	Name   string `boil:"name" json:"name" toml:"name" yaml:"name"`
-	Age    string `boil:"age" json:"age" toml:"age" yaml:"age"`
-	Gender string `boil:"gender" json:"gender" toml:"gender" yaml:"gender"`
-	Phone  string `boil:"phone" json:"phone" toml:"phone" yaml:"phone"`
-	Role   string `boil:"role" json:"role" toml:"role" yaml:"role"`
+	UserID       int    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Name         string `boil:"name" json:"name" toml:"name" yaml:"name"`
+	Age          string `boil:"age" json:"age" toml:"age" yaml:"age"`
+	Gender       string `boil:"gender" json:"gender" toml:"gender" yaml:"gender"`
+	Phone        string `boil:"phone" json:"phone" toml:"phone" yaml:"phone"`
+	Role         string `boil:"role" json:"role" toml:"role" yaml:"role"`
+	HashPassword string `boil:"hash_password" json:"hash_password" toml:"hash_password" yaml:"hash_password"`
+	Email        string `boil:"email" json:"email" toml:"email" yaml:"email"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserColumns = struct {
-	UserID string
-	Name   string
-	Age    string
-	Gender string
-	Phone  string
-	Role   string
+	UserID       string
+	Name         string
+	Age          string
+	Gender       string
+	Phone        string
+	Role         string
+	HashPassword string
+	Email        string
 }{
-	UserID: "user_id",
-	Name:   "name",
-	Age:    "age",
-	Gender: "gender",
-	Phone:  "phone",
-	Role:   "role",
+	UserID:       "user_id",
+	Name:         "name",
+	Age:          "age",
+	Gender:       "gender",
+	Phone:        "phone",
+	Role:         "role",
+	HashPassword: "hash_password",
+	Email:        "email",
 }
 
 var UserTableColumns = struct {
-	UserID string
-	Name   string
-	Age    string
-	Gender string
-	Phone  string
-	Role   string
+	UserID       string
+	Name         string
+	Age          string
+	Gender       string
+	Phone        string
+	Role         string
+	HashPassword string
+	Email        string
 }{
-	UserID: "users.user_id",
-	Name:   "users.name",
-	Age:    "users.age",
-	Gender: "users.gender",
-	Phone:  "users.phone",
-	Role:   "users.role",
+	UserID:       "users.user_id",
+	Name:         "users.name",
+	Age:          "users.age",
+	Gender:       "users.gender",
+	Phone:        "users.phone",
+	Role:         "users.role",
+	HashPassword: "users.hash_password",
+	Email:        "users.email",
 }
 
 // Generated where
 
 var UserWhere = struct {
-	UserID whereHelperint
-	Name   whereHelperstring
-	Age    whereHelperstring
-	Gender whereHelperstring
-	Phone  whereHelperstring
-	Role   whereHelperstring
+	UserID       whereHelperint
+	Name         whereHelperstring
+	Age          whereHelperstring
+	Gender       whereHelperstring
+	Phone        whereHelperstring
+	Role         whereHelperstring
+	HashPassword whereHelperstring
+	Email        whereHelperstring
 }{
-	UserID: whereHelperint{field: "\"users\".\"user_id\""},
-	Name:   whereHelperstring{field: "\"users\".\"name\""},
-	Age:    whereHelperstring{field: "\"users\".\"age\""},
-	Gender: whereHelperstring{field: "\"users\".\"gender\""},
-	Phone:  whereHelperstring{field: "\"users\".\"phone\""},
-	Role:   whereHelperstring{field: "\"users\".\"role\""},
+	UserID:       whereHelperint{field: "\"users\".\"user_id\""},
+	Name:         whereHelperstring{field: "\"users\".\"name\""},
+	Age:          whereHelperstring{field: "\"users\".\"age\""},
+	Gender:       whereHelperstring{field: "\"users\".\"gender\""},
+	Phone:        whereHelperstring{field: "\"users\".\"phone\""},
+	Role:         whereHelperstring{field: "\"users\".\"role\""},
+	HashPassword: whereHelperstring{field: "\"users\".\"hash_password\""},
+	Email:        whereHelperstring{field: "\"users\".\"email\""},
 }
 
 // UserRels is where relationship names are stored.
@@ -132,8 +146,8 @@ func (r *userR) GetPatients() PatientSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"user_id", "name", "age", "gender", "phone", "role"}
-	userColumnsWithoutDefault = []string{"name", "age", "gender", "phone", "role"}
+	userAllColumns            = []string{"user_id", "name", "age", "gender", "phone", "role", "hash_password", "email"}
+	userColumnsWithoutDefault = []string{"name", "age", "gender", "phone", "role", "hash_password", "email"}
 	userColumnsWithDefault    = []string{"user_id"}
 	userPrimaryKeyColumns     = []string{"user_id"}
 	userGeneratedColumns      = []string{}

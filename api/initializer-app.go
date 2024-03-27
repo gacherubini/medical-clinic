@@ -26,11 +26,15 @@ func StartServer() {
 		r.HandleFunc(route.Path, route.Handler).Methods(route.Method)
 	}
 
-	for _, route := range GetDoctorRoutes() {
+	for _, route := range getDoctorRoutes() {
 		r.HandleFunc(route.Path, route.Handler).Methods(route.Method)
 	}
 
 	for _, route := range getPatientRoutes() {
+		r.HandleFunc(route.Path, route.Handler).Methods(route.Method)
+	}
+
+	for _, route := range getAuthRoutes() {
 		r.HandleFunc(route.Path, route.Handler).Methods(route.Method)
 	}
 

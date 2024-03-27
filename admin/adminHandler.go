@@ -214,9 +214,9 @@ func (contextHandler *AdminHandlerContext) HandleAdminGetAllHealthInsurence(w ht
 		return
 	}
 
-	healthInsurence, err := models.Healthinsurances().All(context.Background(), contextHandler.Db)
+	healthInsurance, err := models.Healthinsurances().All(context.Background(), contextHandler.Db)
 
-	jsonDoctors, err := json.Marshal(healthInsurence)
+	jsonDoctors, err := json.Marshal(healthInsurance)
 	if err != nil {
 		http.Error(w, "Error marshaling response", http.StatusInternalServerError)
 		return

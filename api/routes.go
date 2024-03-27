@@ -15,7 +15,7 @@ type Route struct {
 	Handler func(w http.ResponseWriter, r *http.Request)
 }
 
-func GetDoctorRoutes() []Route {
+func getDoctorRoutes() []Route {
 	DoctorHandlerContext := doctor.DoctorHandlerContext{
 		Db: Db,
 	}

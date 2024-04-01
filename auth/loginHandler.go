@@ -49,7 +49,7 @@ func (contextHandler *LoginHandlerContext) LoginHandler(w http.ResponseWriter, r
 		return
 	}
 
-	token, err := utils.GenereteToken(user.UserID)
+	token, err := utils.GenerateToken(user.UserID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error genereting token: ", err), http.StatusInternalServerError)
 		return

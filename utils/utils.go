@@ -89,7 +89,7 @@ func isUserAllowed(r *http.Request, db *sql.DB) bool {
 	return false
 }
 
-func GenereteToken(userId int) (string, error) {
+func GenerateToken(userId int) (string, error) {
 	token_lifespan := 30
 	fmt.Println(userId)
 

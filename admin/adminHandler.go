@@ -15,6 +15,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserAdminStruct struct {
@@ -40,12 +41,20 @@ func (contextHandler *AdminHandlerContext) HandleCreateAdmin(w http.ResponseWrit
 		return
 	}
 
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userAdmin.User.HashPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error generating hashPassword: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	userAdmin.User.HashPassword = string(passwordHash)
+
 	if strings.ToLower(userAdmin.User.Role) != "admin" {
 		http.Error(w, "Invalid role, expected admin", http.StatusBadRequest)
 		return
 	}
 
-	err := userAdmin.User.Insert(context.Background(), contextHandler.Db, boil.Infer())
+	err = userAdmin.User.Insert(context.Background(), contextHandler.Db, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting user: %s", err), http.StatusInternalServerError)
 		return
@@ -205,7 +214,7 @@ func (contextHandler *AdminHandlerContext) HandleAdminCreateHealthInsurence(w ht
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "HealthInsurece created successfully")
+	fmt.Fprintf(w, "HealthInsurance created successfully")
 }
 
 func (contextHandler *AdminHandlerContext) HandleAdminGetAllHealthInsurence(w http.ResponseWriter, r *http.Request) {

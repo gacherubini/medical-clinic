@@ -15,6 +15,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type userPatientStruct struct {
@@ -39,6 +40,14 @@ func (contextHandler PatientHandlerContext) HandleCreatePatient(w http.ResponseW
 		http.Error(w, fmt.Sprintf("Error decoding JSON: %s", err), http.StatusBadRequest)
 		return
 	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPatient.User.HashPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error generating hashPassword: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	userPatient.User.HashPassword = string(passwordHash)
 
 	if strings.ToLower(userPatient.User.Role) != "patient" {
 		http.Error(w, "Invalid role, expected patient", http.StatusBadRequest)

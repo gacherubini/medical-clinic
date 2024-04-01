@@ -13,6 +13,8 @@ import (
 
 var r = mux.NewRouter()
 
+var subR = r.PathPrefix("").Subrouter()
+
 const PORT = 8080
 
 func StartServer() {
@@ -20,17 +22,26 @@ func StartServer() {
 		Db: Db,
 	}
 
-	r.Use(adminMiddlewareContext.IsAdminMiddleware)
+	subR.Use(adminMiddlewareContext.IsAdminMiddleware)
 
 	for _, route := range getAdminRoutes() {
+		if route.Method == http.MethodDelete || route.Method == http.MethodPatch {
+			subR.HandleFunc(route.Path, route.Handler).Methods(route.Method)
+		}
 		r.HandleFunc(route.Path, route.Handler).Methods(route.Method)
 	}
 
 	for _, route := range getDoctorRoutes() {
+		if route.Method == http.MethodDelete || route.Method == http.MethodPatch {
+			subR.HandleFunc(route.Path, route.Handler).Methods(route.Method)
+		}
 		r.HandleFunc(route.Path, route.Handler).Methods(route.Method)
 	}
 
 	for _, route := range getPatientRoutes() {
+		if route.Method == http.MethodDelete || route.Method == http.MethodPatch {
+			subR.HandleFunc(route.Path, route.Handler).Methods(route.Method)
+		}
 		r.HandleFunc(route.Path, route.Handler).Methods(route.Method)
 	}
 

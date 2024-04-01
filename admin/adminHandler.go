@@ -15,6 +15,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserAdminStruct struct {
@@ -40,19 +41,20 @@ func (contextHandler *AdminHandlerContext) HandleCreateAdmin(w http.ResponseWrit
 		return
 	}
 
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userAdmin.User.HashPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error generating hashPassword: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	userAdmin.User.HashPassword = string(passwordHash)
+
 	if strings.ToLower(userAdmin.User.Role) != "admin" {
 		http.Error(w, "Invalid role, expected admin", http.StatusBadRequest)
 		return
 	}
 
-	tx, err := contextHandler.Db.Begin()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error starting transaction: %s", err), http.StatusInternalServerError)
-		return
-	}
-	defer tx.Rollback()
-
-	err = userAdmin.User.Insert(context.Background(), tx, boil.Infer())
+	err = userAdmin.User.Insert(context.Background(), contextHandler.Db, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting user: %s", err), http.StatusInternalServerError)
 		return
@@ -60,14 +62,9 @@ func (contextHandler *AdminHandlerContext) HandleCreateAdmin(w http.ResponseWrit
 
 	userAdmin.Admin.UserID = userAdmin.User.UserID
 
-	err = userAdmin.Admin.Insert(context.Background(), tx, boil.Infer())
+	err = userAdmin.Admin.Insert(context.Background(), contextHandler.Db, boil.Infer())
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error inserting admin: %s", err), http.StatusInternalServerError)
-		return
-	}
-	err = tx.Commit()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error committing transaction: %s", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -193,4 +190,48 @@ func (contextHandler *AdminHandlerContext) HandleUpdateAdmin(w http.ResponseWrit
 	}
 
 	fmt.Fprintf(w, "admin updated successfully")
+}
+
+func (contextHandler *AdminHandlerContext) HandleAdminCreateHealthInsurence(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var healthinsurance models.Healthinsurance
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&healthinsurance); err != nil {
+		http.Error(w, fmt.Sprintf("Error decoding JSON: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	err := healthinsurance.Insert(context.Background(), contextHandler.Db, boil.Infer())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error inserting user: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprintf(w, "HealthInsurance created successfully")
+}
+
+func (contextHandler *AdminHandlerContext) HandleAdminGetAllHealthInsurence(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method is not supported.", http.StatusMethodNotAllowed)
+		return
+	}
+
+	healthInsurance, err := models.Healthinsurances().All(context.Background(), contextHandler.Db)
+
+	jsonDoctors, err := json.Marshal(healthInsurance)
+	if err != nil {
+		http.Error(w, "Error marshaling response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonDoctors)
 }

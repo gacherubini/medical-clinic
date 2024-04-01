@@ -2,6 +2,7 @@ package api
 
 import (
 	"medical-clinic/admin"
+	"medical-clinic/auth"
 	"medical-clinic/doctor"
 	"medical-clinic/patient"
 
@@ -14,10 +15,11 @@ type Route struct {
 	Handler func(w http.ResponseWriter, r *http.Request)
 }
 
-func GetDoctorRoutes() []Route {
+func getDoctorRoutes() []Route {
 	DoctorHandlerContext := doctor.DoctorHandlerContext{
 		Db: Db,
 	}
+
 	var routes = []Route{
 		{Path: "/doctors", Method: http.MethodPost, Handler: DoctorHandlerContext.HandleCreateDoctor},
 		{Path: "/doctors", Method: http.MethodGet, Handler: DoctorHandlerContext.HandleGetAllDoctors},
@@ -38,6 +40,8 @@ func getAdminRoutes() []Route {
 		{Path: "/admin", Method: http.MethodGet, Handler: AdminHandlerContext.HandleGetAllAdmins},
 		{Path: "/admins/{id}", Method: http.MethodDelete, Handler: AdminHandlerContext.HandleDeleteAdmin},
 		{Path: "/admins/{id}", Method: http.MethodPatch, Handler: AdminHandlerContext.HandleUpdateAdmin},
+		{Path: "/admins/healthinsurence", Method: http.MethodPost, Handler: AdminHandlerContext.HandleAdminCreateHealthInsurence},
+		{Path: "/admins/healthinsurence", Method: http.MethodGet, Handler: AdminHandlerContext.HandleAdminGetAllHealthInsurence},
 	}
 
 	return routes
@@ -53,6 +57,18 @@ func getPatientRoutes() []Route {
 		{Path: "/patients/{id}", Method: http.MethodDelete, Handler: PatientHandlerContext.HandleDeletePatient},
 		{Path: "/patients/{id}", Method: http.MethodPatch, Handler: PatientHandlerContext.HandlerUpdatePatient},
 		{Path: "/patients/{id}/healthinsurence", Method: http.MethodPost, Handler: PatientHandlerContext.HandlerAddHealthInsurenceInPatient},
+	}
+
+	return routes
+}
+
+func getAuthRoutes() []Route {
+	AuthHandlerContext := auth.LoginHandlerContext{
+		Db: Db,
+	}
+
+	var routes = []Route{
+		{Path: "/login", Method: http.MethodPost, Handler: AuthHandlerContext.LoginHandler},
 	}
 
 	return routes

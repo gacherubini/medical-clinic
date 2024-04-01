@@ -59,20 +59,30 @@ func isUserAllowed(r *http.Request, db *sql.DB) bool {
 	switch UserFromToken.Role {
 	case "doctor":
 		userDoctor, err := models.FindDoctor(context.Background(), db, UserFromToken.UserID)
+		if err != nil {
+			return false
+		}
 
 		doctor, err := models.FindDoctor(context.Background(), db, intID)
 		if err != nil {
 			return false
 		}
+
 		if doctor.DoctorID == userDoctor.DoctorID {
 			return true
 		}
 	case "patient":
+		userPatient, err := models.FindPatient(context.Background(), db, UserFromToken.UserID)
+		if err != nil {
+			return false
+		}
+
 		patient, err := models.FindPatient(context.Background(), db, intID)
 		if err != nil {
 			return false
 		}
-		if patient.PatientID == intID {
+
+		if patient.PatientID == userPatient.PatientID {
 			return true
 		}
 	}
